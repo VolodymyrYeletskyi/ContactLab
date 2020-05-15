@@ -8,6 +8,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.RecyclerView;
@@ -17,41 +19,42 @@ import java.util.List;
 
 public class MainActivity extends Activity {
     RecyclerView rv;
+    Button btnContacts;
     public List<StringBuffer> contacts = new ArrayList<>();
     private static final int REQUEST_CODE_READ_CONTACTS=1;
-    private static boolean READ_CONTACTS_GRANTED =false;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        btnContacts = findViewById(R.id.btnContacts);
         rv = findViewById(R.id.rv);
 
+        btnContacts.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[]{Manifest.permission.READ_CONTACTS},
+                        REQUEST_CODE_READ_CONTACTS);
+                if(ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED)
+                {
+                    //Метод получения контактных данных
+                    contacts = getContacts();
+                    //создание контейнера RecyclerView для контактов
+                    ContactAdapter contactAdapter = new ContactAdapter(MainActivity.this, contacts);
+                    rv.setAdapter(contactAdapter);
+                }
+            }
+        });
 
 
-        ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.READ_CONTACTS},
-                REQUEST_CODE_READ_CONTACTS);
-        if(READ_CONTACTS_GRANTED) {
-            //Метод получения контактных данных
-            contacts = getContacts();
-            //создание контейнера RecyclerView для контактов
-            ContactAdapter contactAdapter = new ContactAdapter(this, contacts);
-            rv.setAdapter(contactAdapter);
-        }
     }
     //обработка разрешения на чтение контактов
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
     {
-        switch(requestCode)
-        {
-            case REQUEST_CODE_READ_CONTACTS:
-                if(grantResults.length >0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                {
-                    READ_CONTACTS_GRANTED = true;
-                }
-        }
-        if(READ_CONTACTS_GRANTED)
+
+        if(ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED)
         {
             contacts = getContacts();
             ContactAdapter contactAdapter = new ContactAdapter(this, contacts);
@@ -59,7 +62,7 @@ public class MainActivity extends Activity {
         }
         else
         {
-            Toast.makeText(this, "Требуется установить разрешения", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Требуется установить разрешение", Toast.LENGTH_LONG).show();
         }
     }
 
